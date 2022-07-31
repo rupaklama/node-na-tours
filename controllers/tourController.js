@@ -2,9 +2,42 @@ const Tour = require('../models/tourModel');
 
 exports.getAllTours = async (req, res) => {
   try {
-    // Creates a find query: gets a list of documents that match filter
-    const tours = await Tour.find();
+    // accessing query params
+    // console.log(req.query);
 
+    // 1. BUILD QUERY
+    const queryObj = { ...req.query };
+
+    // to ignore these fields from the query object
+    const excludedFields = ['page', 'sort', 'limit', 'fields'];
+
+    // delete operator removes a property from an object
+    excludedFields.forEach((el) => delete queryObj[el]);
+
+    // Creates a find query: gets a list of documents that match filter
+
+    // note - using filter object inside method
+    // const tours = await Tour.find({
+    //   duration: 5,
+    //   difficulty: 'easy',
+    // });
+
+    // note - req.query is same as pass abject above { duration: '5', difficulty: 'easy' }
+    // simple filter with query params
+    const query = Tour.find(queryObj);
+
+    // note - other method is by chaining methods, same as above with Mongoose methods
+    // const query = Tour.find()
+    //   .where('duration')
+    //   .equals(5)
+    //   .where('difficulty')
+    //   .equals('easy');
+
+    // 2. Execute QUERY
+    // note - apply await at the end result of final query
+    const tours = await query;
+
+    // 3. SEND RESPONSE
     res.status(200).json({
       status: 'success',
       // requestedAt: req.requestTime,
