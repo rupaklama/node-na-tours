@@ -72,9 +72,9 @@ const tourSchema = new mongoose.Schema({
     // javascript built in data type - Date object
     type: Date,
     // To get a current Timestamp of right now
-    // In mongoose, this will be immidiately converted to current date
+    // In mongoose, this will be immediately converted to current date
     default: Date.now(),
-    // select: false,
+    select: false, // hide this field
   },
   startDates: [Date],
   // secretTour: {

@@ -1,30 +1,85 @@
 const Tour = require('../models/tourModel');
 
+// Reusable Class Module APIs
+const APIFeatures = require('./../utils/apiFeatures');
+
+// alias middleware to rename api endpoint
+// note - this will run before below endpoints
+exports.aliasTopTours = (req, res, next) => {
+  req.query.limit = '5';
+  req.query.sort = '-ratingsAverage,price';
+  // fields we want
+  // req.query.fields = 'name,price,ratingsAverage,summary,difficulty';
+  next();
+};
+
 exports.getAllTours = async (req, res) => {
   try {
     // accessing query params
     // console.log(req.query);
 
-    // 1. BUILD QUERY
-    const queryObj = { ...req.query };
+    // // 1. BUILD QUERY - filtering
+    // const queryObj = { ...req.query };
 
-    // to ignore these fields from the query object
-    const excludedFields = ['page', 'sort', 'limit', 'fields'];
+    // // to ignore these fields from the query object
+    // const excludedFields = ['page', 'sort', 'limit', 'fields'];
 
-    // delete operator removes a property from an object
-    excludedFields.forEach((el) => delete queryObj[el]);
+    // // delete operator removes a property from an object
+    // excludedFields.forEach((el) => delete queryObj[el]);
 
-    // Creates a find query: gets a list of documents that match filter
+    // // Creates a find query: gets a list of documents that match filter
 
-    // note - using filter object inside method
-    // const tours = await Tour.find({
-    //   duration: 5,
-    //   difficulty: 'easy',
-    // });
+    // // note - using filter object inside method
+    // // const tours = await Tour.find({
+    // //   duration: 5,
+    // //   difficulty: 'easy',
+    // // });
 
-    // note - req.query is same as pass abject above { duration: '5', difficulty: 'easy' }
-    // simple filter with query params
-    const query = Tour.find(queryObj);
+    // // NOTE - Advanced filtering
+    // let queryStr = JSON.stringify(queryObj);
+
+    // // regular expression with \b to match exact word with similar length
+    // // gte stands for Greater Than & Equal
+    // queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);
+    // // note - replace method's callback returns first match word,
+    // // adding "$" on the match string in the Query Object
+    // // console.log(JSON.parse(queryStr));
+
+    // // note - req.query is same as pass abject above { duration: '5', difficulty: 'easy' }
+    // // simple filter with query params
+    // let query = Tour.find(JSON.parse(queryStr));
+
+    // // NOTE - Sorting
+    // if (req.query.sort) {
+    //   // to sort by multiple fields - price & ratingsAverage
+    //   const sortBy = req.query.sort.split(',').join(' ');
+    //   query = query.sort(sortBy);
+    // } else {
+    //   // default sorting so that new ones first
+    //   // '-' for descending
+    //   query = query.sort('-createdAt _id');
+    // }
+
+    // // NOTE - Limiting Fields
+    // if (req.query.fields) {
+    //   const fields = req.query.fields.split(',').join('');
+    //   query = query.select(fields);
+    // } else {
+    //   query = query.select('-__v'); // excluding this field
+    // }
+
+    // // NOTE - Pagination
+    // // default values so that to limit sending all data
+    // const page = req.query.page * 1 || 1;
+    // const limit = req.query.limit * 1 || 100;
+    // const skip = (page - 1) * limit; // skip prev page
+    // query = query.skip(skip).limit(limit);
+
+    // if (req.query.page) {
+    //   const numTours = await Tour.countDocuments();
+
+    //   if (skip >= numTours) throw new Error('This page does not exists');
+    // }
 
     // note - other method is by chaining methods, same as above with Mongoose methods
     // const query = Tour.find()
@@ -34,8 +89,17 @@ exports.getAllTours = async (req, res) => {
     //   .equals('easy');
 
     // 2. Execute QUERY
+    // accessing class methods with query
+    const features = new APIFeatures(Tour.find(), req.query)
+      .filter()
+      .sort()
+      .limitFields()
+      .paginate();
+
     // note - apply await at the end result of final query
-    const tours = await query;
+    // note - all the queries are store in this prop variable in class
+    const tours = await features.query;
+    // const tours = await query;
 
     // 3. SEND RESPONSE
     res.status(200).json({
