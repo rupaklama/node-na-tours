@@ -204,3 +204,60 @@ exports.deleteTour = async (req, res) => {
     });
   }
 };
+
+/**
+ Aggregation is a way of processing a large number of documents in a collection by means of passing them through different stages. The stages make up what is known as a pipeline. The stages in a pipeline can filter, sort, group, reshape and modify documents that pass through the pipeline
+ */
+
+// Aggregation function
+exports.getTourStats = async (req, res) => {
+  try {
+    // note - mongoose give us access to mongodb aggregation
+    // using aggregation is doing a regular query to manipulate data in couple of steps - array of stages
+    const stats = await Tour.aggregate([
+      // defining stages - https://www.mongodb.com/docs/manual/meta/aggregation-quick-reference/
+
+      {
+        // note - each of the stages is an Object
+
+        // first stage
+        // ratingsAverage should be greater than or equal to
+        $match: { ratingsAverage: { $gte: 4.5 } },
+      },
+      {
+        // second stage
+        // it allows us to group document together using accumulator - calculated value
+        $group: {
+          // creating new query object for new query api endpoint
+          _id: { $toUpper: '$difficulty' },
+          numTours: { $sum: 1 },
+          numRatings: { $sum: '$ratingsQuantity' },
+
+          // calculating average rating with Mongodb Operator
+          // $avg - returns the average value of the numeric values
+          //$ratingsAverage by ratingsAverage field
+          avgRating: { $avg: '$ratingsAverage' },
+          avgPrice: { $avg: '$price' },
+          minPrice: { $min: '$price' },
+          maxPrice: { $max: '$price' },
+        },
+      },
+
+      {
+        $sort: { avgPrice: 1 },
+      },
+    ]);
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        stats,
+      },
+    });
+  } catch (err) {
+    res.status(404).json({
+      status: 'fail',
+      message: err.errmsg,
+    });
+  }
+};
