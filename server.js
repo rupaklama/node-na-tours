@@ -27,9 +27,7 @@ mongoose
     console.log('DB connection successful!');
   });
 
-// env variables set by Node which comes from Process Core Modules
-// console.log(process.env);
-
+// note - dotenv must call before app is initialized like above
 const app = require('./app');
 
 const port = process.env.PORT || 4000;

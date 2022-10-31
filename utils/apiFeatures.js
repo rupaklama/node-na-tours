@@ -15,7 +15,13 @@ class APIFeatures {
 
     // 1B) Advanced filtering
     let queryStr = JSON.stringify(queryObj);
+
+    // [] is to specify Operator like here - api/v1/tours?duration[gte]
+    // MongoDB requires the use of '$' with Operator by appending '$' to 'gte' operator to execute queries
+    // duration: { '$gte': '5'}, \b us to match exact word
     queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);
+
+    console.log(JSON.parse(queryStr));
 
     this.query = this.query.find(JSON.parse(queryStr));
 
@@ -25,9 +31,11 @@ class APIFeatures {
 
   sort() {
     if (this.queryString.sort) {
+      // api/v1/tours?sort=price,ratingsAverage - since can't have whitespace in the url so using ','
       const sortBy = this.queryString.sort.split(',').join(' ');
       this.query = this.query.sort(sortBy);
     } else {
+      // '-' for descending order as newest first
       this.query = this.query.sort('-createdAt');
     }
 

@@ -10,7 +10,6 @@ const userRouter = require('./routes/userRoutes');
 /* express app instance */
 const app = express();
 
-console.log(process.env.NODE_ENV);
 if (process.env.NODE_ENV === 'development') {
   // to debug, 'arg' is how we want the logging to look like in console
   app.use(morgan('dev'));
@@ -25,7 +24,7 @@ app.use(express.static(`${__dirname}/public`));
 // note - we have access to Request/Response & Next function on any middleware
 // creating our own custom middleware which gets executed on each single request
 app.use((req, res, next) => {
-  console.log('Hello from the middleware!');
+  // console.log('Hello from the middleware!');
 
   // note - must call next() here otherwise req/res cycle will stuck or stop here
   next();

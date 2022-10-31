@@ -1,11 +1,13 @@
 const express = require('express');
-const router = express.Router();
+
 const fs = require('fs');
 
+const router = express.Router();
+
 /* File Reading should be done outside of Route handler */
-// __dirname - current root folder
+// __dirname - current root folder 'NA-TOURS'
 const toursData = JSON.parse(
-  fs.readFileSync(`${__dirname}/../dev-data/data/tours-simple.json`)
+  fs.readFileSync(`${__dirname}/dev-data/data/tours-simple.json`)
 );
 
 // Param middleware - only runs when there is query param id value in the url
@@ -46,7 +48,7 @@ const checkBody = (req, res, next) => {
 };
 
 /* Routes - Only one purpose & No validation here,
-the validation must be done inside of the middleware stack or pipeline in Express
+the validation must be done inside of the middleware stack or pipeline in Express as above
 */
 
 /* Get */
@@ -70,7 +72,7 @@ router.get('/', (req, res) => {
 /* Detail */
 // :id? is to make it optional
 router.get('/:id', (req, res) => {
-  // to access req.params object with param query variables
+  // to access req.params object
   // console.log(req.params);
 
   const id = Number(req.params.id);
@@ -88,7 +90,9 @@ router.get('/:id', (req, res) => {
 // note - chaining multiple middlewares for the same route
 router.post('/', checkBody, (req, res) => {
   // Express does not put Body data/object in the request by default
-  // We have to use Middleware to have Request Body Object available
+
+  // app.use(express.json());
+  // We have to use above Middleware to have Request Body Object available
   // console.log(req.body); NOTE - the Request Body gets parsed into an Object
 
   // note - accessing object's id property & adding 1 to create a new id
@@ -100,7 +104,7 @@ router.post('/', checkBody, (req, res) => {
   // NOTE - now this Route handler runs inside of the event loop & we should not block the event loop
   // therefore, we are going to use the Async write func and not the Synchronous one
   fs.writeFile(
-    `${__dirname}/../dev-data/data/tours-simple.json`,
+    `${__dirname}/dev-data/data/tours-simple.json`,
 
     // note - parsing toursData object into JSON Strings since our local data is json
     JSON.stringify(toursData),

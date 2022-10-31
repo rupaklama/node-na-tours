@@ -16,78 +16,33 @@ exports.aliasTopTours = (req, res, next) => {
 exports.getAllTours = async (req, res) => {
   try {
     // accessing query params
-    // console.log(req.query);
+    console.log('Request Body:', req.query);
 
-    // // 1. BUILD QUERY - filtering
+    // Creates a find query: gets a list of documents that match filter
+    // FIRST WAY TO QUERY USING FILTER OBJECT
+    // note - using filter object inside method to query
+    // const tours = await Tour.find({
+    //   duration: 5,
+    //   difficulty: 'easy',
+    // });
+
+    // 1. BUILD QUERY - filtering
     // const queryObj = { ...req.query };
 
-    // // to ignore these fields from the query object
+    // to ignore these fields from the query object
     // const excludedFields = ['page', 'sort', 'limit', 'fields'];
 
-    // // delete operator removes a property from an object
+    // to delete or ignore above fields if they are present in our query object to avoid issues
     // excludedFields.forEach((el) => delete queryObj[el]);
 
-    // // Creates a find query: gets a list of documents that match filter
+    // step 1 is to apply all queries
+    // const query = Tour.find(queryObj).filter().sort()
 
-    // // note - using filter object inside method
-    // // const tours = await Tour.find({
-    // //   duration: 5,
-    // //   difficulty: 'easy',
-    // // });
+    // step 2 - execute query at the end with await to send a response object
+    // const testTours = await query;
 
-    // // NOTE - Advanced filtering
-    // let queryStr = JSON.stringify(queryObj);
-
-    // // regular expression with \b to match exact word with similar length
-    // // gte stands for Greater Than & Equal
-    // queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);
-    // // note - replace method's callback returns first match word,
-    // // adding "$" on the match string in the Query Object
-    // // console.log(JSON.parse(queryStr));
-
-    // // note - req.query is same as pass abject above { duration: '5', difficulty: 'easy' }
-    // // simple filter with query params
-    // let query = Tour.find(JSON.parse(queryStr));
-
-    // // NOTE - Sorting
-    // if (req.query.sort) {
-    //   // to sort by multiple fields - price & ratingsAverage
-    //   const sortBy = req.query.sort.split(',').join(' ');
-    //   query = query.sort(sortBy);
-    // } else {
-    //   // default sorting so that new ones first
-    //   // '-' for descending
-    //   query = query.sort('-createdAt _id');
-    // }
-
-    // // NOTE - Limiting Fields
-    // if (req.query.fields) {
-    //   const fields = req.query.fields.split(',').join('');
-    //   query = query.select(fields);
-    // } else {
-    //   query = query.select('-__v'); // excluding this field
-    // }
-
-    // // NOTE - Pagination
-    // // default values so that to limit sending all data
-    // const page = req.query.page * 1 || 1;
-    // const limit = req.query.limit * 1 || 100;
-    // const skip = (page - 1) * limit; // skip prev page
-    // query = query.skip(skip).limit(limit);
-
-    // if (req.query.page) {
-    //   const numTours = await Tour.countDocuments();
-
-    //   if (skip >= numTours) throw new Error('This page does not exists');
-    // }
-
-    // note - other method is by chaining methods, same as above with Mongoose methods
-    // const query = Tour.find()
-    //   .where('duration')
-    //   .equals(5)
-    //   .where('difficulty')
-    //   .equals('easy');
-
+    // NOTE -  SECOND WAY TO QUERY WITH MONGOOSE METHODS
+    // Query object - Query.prototype.sort()
     // 2. Execute QUERY
     // accessing class methods with query
     const features = new APIFeatures(Tour.find(), req.query)
