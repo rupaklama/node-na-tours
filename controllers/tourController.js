@@ -3,10 +3,11 @@ const Tour = require('../models/tourModel');
 // Reusable Class Module APIs
 const APIFeatures = require('./../utils/apiFeatures');
 
-// alias middleware to rename api endpoint
+// note - Creating an alias route for popular endpoint like '/tours/top-5-cheap'
 // note - this will run before below endpoints
 exports.aliasTopTours = (req, res, next) => {
   req.query.limit = '5';
+  // incase the items have save ratingsAverage then sort also by price
   req.query.sort = '-ratingsAverage,price';
   // fields we want
   // req.query.fields = 'name,price,ratingsAverage,summary,difficulty';
@@ -42,9 +43,9 @@ exports.getAllTours = async (req, res) => {
     // const testTours = await query;
 
     // NOTE -  SECOND WAY TO QUERY WITH MONGOOSE METHODS
-    // Query object - Query.prototype.sort()
+    // API Query object - Query.prototype.sort()
     // 2. Execute QUERY
-    // accessing class methods with query
+    // Args - schema query `Model.find()`, queryString
     const features = new APIFeatures(Tour.find(), req.query)
       .filter()
       .sort()
@@ -167,30 +168,33 @@ exports.deleteTour = async (req, res) => {
 // Aggregation function
 exports.getTourStats = async (req, res) => {
   try {
-    // note - mongoose give us access to mongodb aggregation
+    // note - this pipeline is a mongoDB feature but mongoose give us access to mongodb aggregation
     // using aggregation is doing a regular query to manipulate data in couple of steps - array of stages
     const stats = await Tour.aggregate([
       // defining stages - https://www.mongodb.com/docs/manual/meta/aggregation-quick-reference/
 
+      // note - each of the stages is an Object, first object is first stage
       {
-        // note - each of the stages is an Object
-
         // first stage
+        // $match uses standard MongoDB queries to filter the documents
         // ratingsAverage should be greater than or equal to
         $match: { ratingsAverage: { $gte: 4.5 } },
       },
       {
-        // second stage
-        // it allows us to group document together using accumulator - calculated value
+        // second stage is to query based on average values of fields for all our tours
+        // it allows us to group documents together using accumulator - calculated value
         $group: {
-          // creating new query object for new query api endpoint
+          // displaying stats based on 'difficulty' field
           _id: { $toUpper: '$difficulty' },
+
+          // adding numTours field to store documents count
           numTours: { $sum: 1 },
+
           numRatings: { $sum: '$ratingsQuantity' },
 
           // calculating average rating with Mongodb Operator
-          // $avg - returns the average value of the numeric values
-          //$ratingsAverage by ratingsAverage field
+          // $avg - mongoDB operator returns the average value of the numeric values
+          // have to use '$'ratingsAverage in mongoDB to query by ratingsAverage field
           avgRating: { $avg: '$ratingsAverage' },
           avgPrice: { $avg: '$price' },
           minPrice: { $min: '$price' },
@@ -198,16 +202,90 @@ exports.getTourStats = async (req, res) => {
         },
       },
 
+      // to sort the response by avgPrice field & 1 is to display by ascending
       {
         $sort: { avgPrice: 1 },
       },
+
+      // NOTE - we can also REPEAT STAGES using 'match' to filter out again
+      {
+        $match: { _id: { $ne: 'EASY' } },
+      },
     ]);
 
+    // sending response in our new route - route('/tour-stats').get(tourController.getTourStats);
     res.status(200).json({
       status: 'success',
       data: {
         stats,
       },
+    });
+  } catch (err) {
+    res.status(404).json({
+      status: 'fail',
+      message: err.errmsg,
+    });
+  }
+};
+
+// route('/monthly-tours/:year').get(tourController.getMonthlyTours);
+// This is to count how many tours in a month for the given year
+exports.getMonthlyTours = async (req, res) => {
+  try {
+    const year = req.params.year * 1;
+    const plan = await Tour.aggregate([
+      {
+        // $unwind - Deconstructs an array field from the input documents to output a document for each element
+        // Creating SINGLE Document object from each dates in the array
+        $unwind: '$startDates',
+      },
+      {
+        $match: {
+          startDates: {
+            // between first & last day of the year
+            $gte: new Date(`${year}-01-01`),
+            $lte: new Date(`${year}-12-31`),
+          },
+        },
+      },
+      {
+        // it allows us to group documents together using accumulator - calculated value
+        $group: {
+          // $month operator Returns the month of a date as a number between 1 and 12
+          _id: { $month: '$startDates' }, // 1 or 7 or 3
+
+          // adding variable to store count tours, update count by 1
+          numTourStarts: { $sum: 1 },
+
+          // which tours
+          // $push is to create an array with tour names
+          tours: { $push: '$name' },
+        },
+      },
+      {
+        // to add field
+        $addFields: { month: '$_id' },
+      },
+      {
+        // $project is to get rid of the field, it can also add, reset etc
+        $project: {
+          // 0 is to hide this field
+          _id: 0,
+        },
+      },
+      {
+        $sort: { numTourStarts: -1 }, // descending
+      },
+      {
+        // display 12 items
+        $limit: 12,
+      },
+    ]);
+
+    // sending response
+    res.status(200).json({
+      status: 'success',
+      data: { plan },
     });
   } catch (err) {
     res.status(404).json({

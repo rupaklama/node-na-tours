@@ -7,13 +7,15 @@ const router = express.Router();
 // router.route('/api/v1/tours').get(getAllTours); SAME AS ABOVE
 
 // note - Aliasing - assigning optional name for a popular api route
-// Need to create a middleware to do this
+// Need to create a middleware to do this in tourController
 router
   .route('/top-5-cheap')
-  // chaining routes
+  // chaining getAllTours with our middleware endpoint
   .get(tourController.aliasTopTours, tourController.getAllTours);
 
+// Aggregate data endpoints
 router.route('/tour-stats').get(tourController.getTourStats);
+router.route('/monthly-tours/:year').get(tourController.getMonthlyTours);
 
 router
   .route('/')
