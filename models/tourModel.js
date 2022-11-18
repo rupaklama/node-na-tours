@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const slugify = require('slugify');
 
 // basic schema
 const tourSchema = new mongoose.Schema(
@@ -12,6 +13,7 @@ const tourSchema = new mongoose.Schema(
       unique: true,
       trim: true,
     },
+    slug: String,
     duration: {
       type: Number,
       required: [true, 'A tour must have a duration'],
@@ -110,6 +112,33 @@ tourSchema.virtual('durationWeeks').get(function () {
   // 'this' points to a current document
   return this.duration / 7; // 1 === 7 days
 });
+
+// NOTE -  Mongoose also have four types of middleware
+// 1. Document 2. Query 3. Aggregate 4. Model
+// we can run middleware before or after certain event like
+// saving document in db and this process is known as Pre or Post hook.
+
+// note - using Document middleware on current processed document to do something
+// This runs only before .save() & .create() events, before saving document in the db
+tourSchema.pre('save', function (next) {
+  // crating new property for slug
+  this.slug = slugify(this.name, { lower: true });
+
+  next();
+});
+
+// tourSchema.pre('save', (next) => {
+//   console.log('Will save document!');
+
+//   next();
+// });
+
+// // after saving in db, post method has access on currently saved document in db which is 'doc' as arg
+// tourSchema.post('save', (doc, next) => {
+//   console.log(doc);
+
+//   next();
+// });
 
 // convention to always use uppercase for Modal Names & related variables
 // telling mongoose to create new model class instance - Tour
