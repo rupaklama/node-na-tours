@@ -86,6 +86,11 @@ const tourSchema = new mongoose.Schema(
     //   type: Boolean,
     //   default: false,
     // },
+
+    secretTour: {
+      type: Boolean,
+      default: false,
+    },
   },
   // second arg is Option Object
   {
@@ -118,12 +123,16 @@ tourSchema.virtual('durationWeeks').get(function () {
 // we can run middleware before or after certain event like
 // saving document in db and this process is known as Pre or Post hook.
 
+/* 1. Document Middleware */
 // note - using Document middleware on current processed document to do something
 // This runs only before .save() & .create() events, before saving document in the db
+// next arg - preSave middleware has access to 'next' to call next middleware in stack
 tourSchema.pre('save', function (next) {
   // crating new property for slug
+  // this.name - use name property for slug
   this.slug = slugify(this.name, { lower: true });
 
+  // calling pass arg 'next' middleware here
   next();
 });
 
@@ -139,6 +148,28 @@ tourSchema.pre('save', function (next) {
 
 //   next();
 // });
+
+/* 2. Query Middleware */
+// This middleware allows us to run Function before or after certain query is executed
+// PreFind hook is a middleware executed before any Find Query is executed
+// /^find/ - regular expression to execute all kinds of Find Queries, strings start with 'find'
+tourSchema.pre(/^find/, function (next) {
+  // note - 'this' here refers to the current query since we are not processing any document object here
+  // running an additional query here before executing a Main Controller Query to filter out
+  this.find({ secretTour: { $ne: true } });
+
+  // to find how long the query took to get executed
+  this.start = Date.now();
+  next();
+});
+
+// after query has been executed where we have an access to document object
+tourSchema.post(/^find/, function (docs, next) {
+  console.log(`Query took ${Date.now() - this.start} milliseconds`);
+  // console.log(docs);
+
+  next();
+});
 
 // convention to always use uppercase for Modal Names & related variables
 // telling mongoose to create new model class instance - Tour
