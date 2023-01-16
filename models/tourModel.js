@@ -12,6 +12,10 @@ const tourSchema = new mongoose.Schema(
       // to be unique
       unique: true,
       trim: true,
+
+      // string validators
+      maxlength: [40, 'A tour name must have less or equal then 40 characters'],
+      minlength: [10, 'A tour name must have more or equal then 10 characters'],
     },
     slug: String,
     duration: {
@@ -25,17 +29,20 @@ const tourSchema = new mongoose.Schema(
     difficulty: {
       type: String,
       required: [true, 'A tour must have a difficulty'],
-      // enum: {
-      //   values: ['easy', 'medium', 'difficult'],
-      //   message: 'Difficulty is either: easy, medium, difficult',
-      // },
+
+      // enum validator for strings only
+      enum: {
+        values: ['easy', 'medium', 'difficult'],
+        message: 'Difficulty is either: easy, medium, difficult',
+      },
     },
     ratingsAverage: {
       type: Number,
       // to set default value
       default: 4.5,
-      // min: [1, 'Rating must be above 1.0'],
-      // max: [5, 'Rating must be below 5.0'],
+      // it also works for dates, not just numbers
+      min: [1, 'Rating must be above 1.0'],
+      max: [5, 'Rating must be below 5.0'],
     },
     ratingsQuantity: {
       type: Number,
@@ -47,13 +54,19 @@ const tourSchema = new mongoose.Schema(
     },
     priceDiscount: {
       type: Number,
-      // validate: {
-      //   validator: function (val) {
-      //     // this only points to current doc on NEW document creation
-      //     return val < this.price;
-      //   },
-      //   message: 'Discount price ({VALUE}) should be below regular price',
-      // },
+
+      // custom validator with 'validate' property
+      // note - we need to return true or false from this validator
+      validate: {
+        validator: function (val) {
+          // this only points to current doc on NEW document creation
+          // not going to work on update
+          return val < this.price;
+        },
+        // val === value
+        // this message occurs if false in above condition
+        message: 'Discount price ({VALUE}) should be below regular price',
+      },
     },
     summary: {
       type: String,
@@ -119,7 +132,7 @@ tourSchema.virtual('durationWeeks').get(function () {
 });
 
 // NOTE -  Mongoose also have four types of middleware
-// 1. Document 2. Query 3. Aggregate 4. Model
+// 1. Document 2. Query 3. Aggregate
 // we can run middleware before or after certain event like
 // saving document in db and this process is known as Pre or Post hook.
 
@@ -170,6 +183,9 @@ tourSchema.post(/^find/, function (docs, next) {
 
   next();
 });
+
+/* 3. Aggregate Middleware */
+// allows us to add hooks before or after an Aggregation happens
 
 // convention to always use uppercase for Modal Names & related variables
 // telling mongoose to create new model class instance - Tour

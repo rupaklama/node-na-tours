@@ -69,7 +69,7 @@ exports.getAllTours = async (req, res) => {
   } catch (err) {
     res.status(404).json({
       status: 'fail',
-      message: err.errmsg,
+      message: err,
     });
   }
 };
@@ -90,7 +90,7 @@ exports.getTour = async (req, res) => {
   } catch (err) {
     res.status(404).json({
       status: 'fail',
-      message: err.errmsg,
+      message: err,
     });
   }
 };
@@ -114,7 +114,7 @@ exports.createTour = async (req, res) => {
   } catch (err) {
     res.status(400).json({
       status: 'fail',
-      message: err.errmsg,
+      message: err,
     });
   }
 };
@@ -140,7 +140,7 @@ exports.updateTour = async (req, res) => {
   } catch (err) {
     res.status(400).json({
       status: 'fail',
-      message: 'invalid data sent',
+      message: err,
     });
   }
 };
