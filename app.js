@@ -41,5 +41,29 @@ app.use((req, res, next) => {
 app.use('/api/v1/tours', toursRouter);
 app.use('/api/v1/users', userRouter);
 
+// unhandled routes
+app.all('*', (req, res, next) => {
+  // creating error & defining the status, statusCode
+  const err = new Error(`Can't find ${req.originalUrl} on this server!`);
+  err.status = 'fail';
+  err.statusCode = 404;
+
+  // note - when next() receives any argument, express will know automatically there is an error
+  // it will skip all the middleware in the middleware stacks & send error into global error handling middleware
+  next(err);
+});
+
+// global error handling middleware
+app.use((err, req, res, next) => {
+  // default status code & status message
+  err.statusCode = err.statusCode || 500;
+  err.status = err.status || 'server error';
+
+  res.status(err.statusCode).json({
+    status: err.status,
+    message: err.message,
+  });
+});
+
 // default exporting this module
 module.exports = app;
