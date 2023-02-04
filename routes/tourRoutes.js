@@ -15,7 +15,7 @@ router
 
 // Aggregate data endpoints
 router.route('/tour-stats').get(tourController.getTourStats);
-router.route('/monthly-tours/:year').get(tourController.getMonthlyTours);
+// router.route('/monthly-tours/:year').get(tourController.getMonthlyTours);
 
 router
   .route('/')

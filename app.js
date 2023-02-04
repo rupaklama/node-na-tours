@@ -6,6 +6,9 @@ const morgan = require('morgan');
 const toursRouter = require('./routes/tourRoutes');
 const userRouter = require('./routes/userRoutes');
 
+const AppError = require('./utils/appError');
+const globalErrorHandler = require('./controllers/errorController');
+
 /* Middleware */
 /* express app instance */
 const app = express();
@@ -43,27 +46,36 @@ app.use('/api/v1/users', userRouter);
 
 // unhandled routes
 app.all('*', (req, res, next) => {
-  // creating error & defining the status, statusCode
-  const err = new Error(`Can't find ${req.originalUrl} on this server!`);
-  err.status = 'fail';
-  err.statusCode = 404;
+  // creating error object with msg & defining the status, statusCode
+  // const err = new Error(`Can't find ${req.originalUrl} on this server!`);
+  // err.status = 'fail';
+  // err.statusCode = 404;
 
   // note - when next() receives any argument, express will know automatically there is an error
   // it will skip all the middleware in the middleware stacks & send error into global error handling middleware
-  next(err);
+  // next(err);
+
+  // using error class with msg & status code args
+  next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
 });
 
 // global error handling middleware
-app.use((err, req, res, next) => {
-  // default status code & status message
-  err.statusCode = err.statusCode || 500;
-  err.status = err.status || 'server error';
+// app.use((err, req, res, next) => {
+// stack trace are details where the error occurred
+//   console.log(err.stack);
 
-  res.status(err.statusCode).json({
-    status: err.status,
-    message: err.message,
-  });
-});
+// default status code & status message
+//   err.statusCode = err.statusCode || 500;
+//   err.status = err.status || 'server error';
+
+//   res.status(err.statusCode).json({
+//     status: err.status,
+//     message: err.message,
+//   });
+// });
+
+// created separated error handler for above global error handling middleware
+app.use(globalErrorHandler);
 
 // default exporting this module
 module.exports = app;

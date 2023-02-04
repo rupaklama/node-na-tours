@@ -120,7 +120,7 @@ const tourSchema = new mongoose.Schema(
 // Mostly use to create some utility operations on our schema
 // NOTE - The Virtual Property can't be use in a Query since it is not part of a database
 
-// we can do this in our Controller but that is not a best practice since
+// NOTE -  we can do this in our Controller but that is not a best practice since
 // we have to keep our Application Logic & Business Logic 'Model' separated as possible.
 
 // creating Virtual Property named 'durationWeeks'
