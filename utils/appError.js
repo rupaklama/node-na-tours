@@ -7,10 +7,10 @@ class AppError extends Error {
     this.statusCode = statusCode;
     this.status = `${statusCode}`.startsWith('4') ? 'fail' : 'error';
 
-    // programming errors but not bugs
+    // all errors are mark as Operational error except third party libraries errors
     this.isOperational = true;
 
-    // constructor function won't be call in the stack trace to not to pollute with more details
+    // constructor function won't be call in the stack trace to not to pollute with more unneeded details
     Error.captureStackTrace(this, this.constructor);
   }
 }

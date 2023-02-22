@@ -4,12 +4,15 @@ const mongoose = require('mongoose');
 // to access Env variables
 const dotenv = require('dotenv');
 
-// note - uncaughtException should be on the top level to detect errors
+// note - uncaughtException should be on the top level to detect Bugs
 process.on('uncaughtException', (err) => {
   console.log('uncaught exception...shutting down');
 
   console.log(err.name, ':', err.message);
 
+  // note - This is not optional with uncaughtException
+  // After error, entire Node Process is in unclean state.
+  // To fix it, the process needs to terminate & restarted.
   process.exit(1);
 });
 
@@ -50,7 +53,7 @@ const server = app.listen(port, '127.0.0.1', () => {
 });
 
 // note - Unhandled Rejections are related to Promises
-// Uncaught Exceptions are bugs related to synchronous code
+// Uncaught Exceptions are bugs related to Synchronous Code
 
 // note - global unhandled promise rejections, async code
 // subscribing unhandled rejection object here
@@ -65,6 +68,7 @@ process.on('unhandledRejection', (err) => {
 
   console.log(err.name, ':', err.message);
 
+  // shutting down the server gracefully
   server.close(() => {
     // doing this will give server some time to finish current tasks and handle current requests pending
     // Only after that the server will be shut down
