@@ -1,0 +1,46 @@
+//- pug is a simple white space sensitive syntax for writing html with tag name & indentation only
+//- a templating engine designed to render HTML in server-side technologies such as Node. js
+
+doctype html
+html(lang="en")
+  head
+    meta(charset="UTF-8")
+    meta(http-equiv="X-UA-Compatible", content="IE=edge")
+    meta(name="viewport", content="width=device-width, initial-scale=1.0")
+
+    link(rel="shortcut icon", type="image/png", href="img/favicon.png")
+
+    title Natours | Exciting tours for adventurous people
+
+    link(rel="stylesheet", href="css/style.css")
+    link(rel="stylesheet", href="https://fonts.googleapis.com/css?family=Lato:300,300i,700")
+
+
+  body 
+    // Header
+    header.header 
+      nav.nav.nav--tours
+        a.nav__el(href="#") All tours
+
+    //-  <header class="header">
+    //-   <nav class="nav nav--tours">
+    //-     <a href="#" class="nav__el">All tours</a>
+       
+    //-   </nav>
+      
+    //-   <div class="header__logo">
+    //-     <img src="img/logo-white.png" alt="Natours logo" />
+    //-   </div>
+    //-   <nav class="nav nav--user">
+    //-     <a href="#" class="nav__el">My bookings</a>
+    //-     <a href="#" class="nav__el">
+    //-       <img src="img/user.jpg" alt="User photo" class="nav__user-img" />
+    //-       <span>Jonas</span>
+    //-     </a>
+
+    //-     <!-- <button class="nav__el">Log in</button>
+    //-     <button class="nav__el nav__el--cta">Sign up</button> -->
+    //-   </nav>
+    </header>
+    
+

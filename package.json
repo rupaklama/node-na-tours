@@ -11,11 +11,14 @@
   "author": "Rupak Lama",
   "license": "ISC",
   "dependencies": {
+    "bcryptjs": "^2.4.3",
     "config": "^3.3.7",
     "dotenv": "^16.0.1",
     "express": "^4.18.1",
+    "jsonwebtoken": "^9.0.0",
     "mongoose": "^5.13.14",
     "morgan": "^1.10.0",
+    "pug": "^3.0.2",
     "slugify": "^1.6.5",
     "validator": "^13.7.0"
   },

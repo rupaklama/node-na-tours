@@ -1,0 +1,30 @@
+//- pug is a simple white space sensitive syntax for writing html with tag name & indentation only
+//- a templating engine designed to render HTML in server-side technologies such as Node. js
+
+doctype html
+html(lang="en")
+  head
+    meta(charset="UTF-8")
+    meta(http-equiv="X-UA-Compatible", content="IE=edge")
+    meta(name="viewport", content="width=device-width, initial-scale=1.0")
+
+    link(rel="shortcut icon", type="image/png", href="img/favicon.png")
+
+    //- template strings with #{}
+    title Natours | #{tours}
+
+    link(rel="stylesheet", href="css/style.css")
+
+  body 
+    //- using object variable known as Local pass in option object in the route
+    h1= tour
+    h2= user
+
+    //- we can also write js here, un-buffer code is code that is not going to add anything to the output
+    - const x = 9;
+
+    //- rest are all buffer code which will outputted in the ui
+    h2= 2 * x
+
+    p This is just some text
+

@@ -2,6 +2,7 @@
 
 const express = require('express');
 const morgan = require('morgan');
+const path = require('path');
 
 const toursRouter = require('./routes/tourRoutes');
 const userRouter = require('./routes/userRoutes');
@@ -13,6 +14,17 @@ const globalErrorHandler = require('./controllers/errorController');
 /* express app instance */
 const app = express();
 
+// defining pug view engine here
+app.set('view engine', 'pug');
+
+// define path to 'views' in our file system
+app.set('views', path.join(__dirname, 'views'));
+
+// Middleware to server Static files from local directory
+// app.use(express.static(`${__dirname}/public`));
+// note - sane as above but approach
+app.use(express.static(path.join(__dirname, 'public')));
+
 if (process.env.NODE_ENV === 'development') {
   // to debug, 'arg' is how we want the logging to look like in console
   app.use(morgan('dev'));
@@ -20,9 +32,6 @@ if (process.env.NODE_ENV === 'development') {
 
 // Middleware to consume Request Body Object - default body parser package
 app.use(express.json());
-
-// Middleware to server Static files from local directory
-app.use(express.static(`${__dirname}/public`));
 
 // note - we have access to Request/Response & Next function on any middleware
 // creating our own custom middleware which gets executed on each single request
@@ -41,6 +50,16 @@ app.use((req, res, next) => {
 });
 
 /* ROUTES */
+app.get('/', (req, res) => {
+  // render base pug template
+  res.status(200).render('base', {
+    // this option object is to pass any data to render in pug template
+    // Object Properties are known as Locals in pug file
+    tour: 'The Forest Hiker',
+    user: 'Jonas',
+  });
+});
+
 app.use('/api/v1/tours', toursRouter);
 app.use('/api/v1/users', userRouter);
 
@@ -59,7 +78,7 @@ app.all('*', (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
 });
 
-// NOTE - global error handling middleware
+// NOTE - global Operational Error handling middleware
 // app.use((err, req, res, next) => {
 // stack trace are details where the error occurred
 //   console.log(err.stack);
