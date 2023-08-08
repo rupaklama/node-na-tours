@@ -3,6 +3,7 @@ const fs = require('fs');
 // note - Blocking Synchronous way to read & write
 
 // read file: fs.readFileSync(path[, options])
+// utf-8: to return Strings instead of default Buffer data
 const textIn = fs.readFileSync('./dev-data/data/txt/input.txt', 'utf-8');
 
 // write file: fs.writeFileSync(file, data[, options])
