@@ -1,3 +1,4 @@
+const { promisify } = require('util');
 const jwt = require('jsonwebtoken');
 const User = require('./../models/userModel');
 const catchAsync = require('./../utils/catchAsync');
@@ -15,6 +16,8 @@ exports.signup = catchAsync(async (req, res, next) => {
     email: req.body.email,
     password: req.body.password,
     passwordConfirm: req.body.passwordConfirm,
+    passwordChangedAt: req.body.passwordChangedAt,
+    role: req.body.role,
   });
 
   const token = generateToken(newUser._id);
@@ -50,3 +53,50 @@ exports.login = catchAsync(async (req, res, next) => {
     token,
   });
 });
+
+exports.protect = catchAsync(async (req, res, next) => {
+  let token;
+  // check if token exists
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+    token = req.headers.authorization.split(' ')[1];
+  }
+
+  if (!token) {
+    return next(new AppError('You are not logged in! Please log in to get access.', 401));
+  }
+
+  // verify user jwt token
+  // jwt.verify is iife calling with pass arguments
+  // const verify = promisify(jwt.verify);
+  // verify(token, process.env.JWT_SECRET).then().catch();
+  const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+  // console.log(decoded);
+
+  // check if user still exists
+  const currentUser = await User.findById(decoded.id);
+  if (!currentUser) {
+    return next(new AppError('The user with the token does not exists.', 401));
+  }
+
+  // check if user changed password after token was issued
+  if (currentUser.changedPasswordAfter(decoded.iat)) {
+    return next(new AppError('User recently changed password! Please log in again.', 401));
+  }
+
+  // for future use
+  req.user = currentUser;
+
+  // grant access to protected route
+  next();
+});
+
+// authorization: User roles & permissions
+// note - need wrapper function since can't pass args into middleware function
+exports.restrictTo = (...roles) =>
+  catchAsync(async (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return next(new AppError('You do not have permission to perform this action', 403));
+    }
+
+    next();
+  });

@@ -37,6 +37,7 @@ app.use(express.json());
 // creating our own custom middleware which gets executed on each single request
 app.use((req, res, next) => {
   // console.log('Hello from the middleware!');
+  // console.log(req.headers);
 
   // note - must call next() here otherwise req/res cycle will stuck or stop here
   next();
