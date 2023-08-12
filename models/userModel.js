@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcryptjs');
@@ -41,6 +42,8 @@ const userSchema = new mongoose.Schema({
   },
 
   passwordChangedAt: Date,
+  passwordResetToken: String,
+  passwordResetExpires: Date,
 });
 
 // using mongoose pre save document middleware
@@ -56,6 +59,7 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
+// note - creating mongoose instance methods for extra functionalities
 userSchema.methods.correctPassword = async function (inputPassword, userPassword) {
   return await bcrypt.compare(inputPassword, userPassword);
 };
@@ -69,6 +73,23 @@ userSchema.methods.changedPasswordAfter = function (JWTtimestamp) {
 
   // password not changed
   return false;
+};
+
+userSchema.methods.createPasswordResetToken = function () {
+  // NOTE: Reset token can be just a basic random string,
+  // not cryptographically strong as hashed password like with jwt token
+  const resetToken = crypto.randomBytes(32).toString('hex');
+
+  // MUST need to 'encrypt' resetToken to store in db for safety issues
+  this.passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+
+  // console.log({ resetToken }, this.passwordResetToken);
+
+  // password expire time - 10 mins, converting to millie seconds
+  this.passwordResetExpires = Date.now() + 10 * 60 * 1000;
+
+  // sending un-encrypt basic plain text token
+  return resetToken;
 };
 
 const User = mongoose.model('User', userSchema);
