@@ -6,7 +6,8 @@ const catchAsync = require('./../utils/catchAsync');
 const AppError = require('../utils/appError');
 const sendEmail = require('../utils/email');
 
-// NOTE: Always use 'user.save()' on authentication, not user.update as a good practice
+// NOTE: Always use 'user.save()' on authentication, not user.update
+// as a good practice to avoid bugs and data issues
 
 const generateToken = (id) =>
   // jwt.sign(payload, secretOrPrivateKey, [options, callback]) - create jwt

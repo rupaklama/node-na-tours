@@ -44,6 +44,12 @@ const userSchema = new mongoose.Schema({
   passwordChangedAt: Date,
   passwordResetToken: String,
   passwordResetExpires: Date,
+  active: {
+    type: Boolean,
+    default: true,
+    // hide this prop since we don't want any users to know
+    select: false,
+  },
 });
 
 // using mongoose pre save document middleware
@@ -59,6 +65,7 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
+// Query middleware 'schema.pre' is to add any extra steps before any ongoing query somewhere in our app
 // Update 'changedPasswordAt' property for the user after password reset
 userSchema.pre('save', async function (next) {
   // if password prop is not modified or a new document
@@ -72,7 +79,16 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
-// note - creating mongoose instance methods for extra functionalities
+// Query middleware to remove deleted user in the response list on any User.find() query
+userSchema.pre(/^find/, function (next) {
+  // send only active users in the response object
+  // this.find({ active: true });
+  this.find({ active: { $ne: false } });
+
+  next();
+});
+
+// note - creating mongoose 'instance' methods for extra functionalities
 userSchema.methods.correctPassword = async function (inputPassword, userPassword) {
   return await bcrypt.compare(inputPassword, userPassword);
 };
@@ -96,7 +112,7 @@ userSchema.methods.createPasswordResetToken = function () {
   // MUST need to 'encrypt' resetToken to store in db for safety issues
   this.passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
 
-  console.log({ resetToken }, this.passwordResetToken);
+  // console.log({ resetToken }, this.passwordResetToken);
 
   // password expire time - 10 mins, converting to millie seconds
   this.passwordResetExpires = Date.now() + 10 * 60 * 1000;
