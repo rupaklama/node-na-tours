@@ -59,6 +59,19 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
+// Update 'changedPasswordAt' property for the user after password reset
+userSchema.pre('save', async function (next) {
+  // if password prop is not modified or a new document
+  if (!this.isModified('password') || this.isNew) return next();
+
+  // note: It is to prevent any time delays in creating the token and updating the changed at field in db.
+  // This is to make sure that token is always created after the password gets updated in db
+  // By saying the changed at field was done a second earlier, we are fixing the bug which is
+  // 'passwordChangedAt' timestamp might set before jwt token gets created
+  this.passwordChangedAt = Date.now() - 1000; // 1s
+  next();
+});
+
 // note - creating mongoose instance methods for extra functionalities
 userSchema.methods.correctPassword = async function (inputPassword, userPassword) {
   return await bcrypt.compare(inputPassword, userPassword);
@@ -83,7 +96,7 @@ userSchema.methods.createPasswordResetToken = function () {
   // MUST need to 'encrypt' resetToken to store in db for safety issues
   this.passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
 
-  // console.log({ resetToken }, this.passwordResetToken);
+  console.log({ resetToken }, this.passwordResetToken);
 
   // password expire time - 10 mins, converting to millie seconds
   this.passwordResetExpires = Date.now() + 10 * 60 * 1000;
