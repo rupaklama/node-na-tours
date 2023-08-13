@@ -17,7 +17,25 @@ const generateToken = (id) =>
 
 // reusable function
 const createSendToken = (user, statusCode, res) => {
-  const token = generateToken(user);
+  const token = generateToken(user._id);
+
+  const cookieOptions = {
+    // browser will delete the cookie after it expires in 7 days
+    // Converting into milli secs
+    expires: new Date(Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000),
+    // Cookie to be only send in encrypted connection - https, only works in prod
+    // secure: true,
+    // Cookie cannot be access or modified anyway by Browser
+    httpOnly: true,
+  };
+
+  if (process.env.NODE_ENV === 'production') cookieOptions.secure = true;
+
+  // remove the password in the response object output
+  user.password = undefined;
+
+  // sending jwt via Cookie
+  res.cookie('jwt', token, cookieOptions);
 
   res.status(statusCode).json({
     status: 'success',
@@ -38,16 +56,7 @@ exports.signup = catchAsync(async (req, res, next) => {
     role: req.body.role,
   });
 
-  const token = generateToken(newUser._id);
-
-  res.status(201).json({
-    status: 'success',
-    // sending token to the client to login user right away
-    token,
-    data: {
-      user: newUser,
-    },
-  });
+  createSendToken(newUser, 201, res);
 });
 
 exports.login = catchAsync(async (req, res, next) => {
@@ -64,12 +73,7 @@ exports.login = catchAsync(async (req, res, next) => {
     return next(new AppError('Incorrect email or password!', 401));
   }
 
-  const token = generateToken(user._id);
-
-  res.status(200).json({
-    status: 'success',
-    token,
-  });
+  createSendToken(user, 200, res);
 });
 
 exports.protect = catchAsync(async (req, res, next) => {
@@ -183,12 +187,7 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   // 3. Update 'changedPasswordAt' property for the user
 
   // 5. Log the user in sending jwt token to the client
-  const token = generateToken(user._id);
-
-  res.status(200).json({
-    status: 'success',
-    token,
-  });
+  createSendToken(user, 200, res);
 });
 
 // password update for current auth user
