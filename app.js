@@ -1,6 +1,7 @@
 /* Express related */
 
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const morgan = require('morgan');
 const path = require('path');
 
@@ -10,7 +11,7 @@ const userRouter = require('./routes/userRoutes');
 const AppError = require('./utils/appError');
 const globalErrorHandler = require('./controllers/errorController');
 
-/* Middleware */
+/* Global Middleware */
 /* express app instance */
 const app = express();
 
@@ -29,6 +30,15 @@ if (process.env.NODE_ENV === 'development') {
   // to debug, 'arg' is how we want the logging to look like in console
   app.use(morgan('dev'));
 }
+
+// Rate Limiting: to allow number of http request from particular IP address
+const limiter = rateLimit({
+  // 100 requests from same IP per Hour
+  max: 3,
+  windowMs: 60 * 60 * 1000,
+  message: 'Too many requests from this IP, please try in an hour!',
+});
+app.use('/api', limiter);
 
 // Middleware to consume Request Body Object - default body parser package
 app.use(express.json());
