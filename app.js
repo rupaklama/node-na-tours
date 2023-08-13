@@ -2,6 +2,7 @@
 
 const express = require('express');
 const rateLimit = require('express-rate-limit');
+const helmet = require('helmet');
 const morgan = require('morgan');
 const path = require('path');
 
@@ -14,6 +15,9 @@ const globalErrorHandler = require('./controllers/errorController');
 /* Global Middleware */
 /* express app instance */
 const app = express();
+
+// Set security HTTP Headers
+app.use(helmet());
 
 // defining pug view engine here
 app.set('view engine', 'pug');
