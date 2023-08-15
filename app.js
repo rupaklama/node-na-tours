@@ -1,8 +1,13 @@
 /* Express related */
 
 const express = require('express');
+
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
+const mongoSanitize = require('express-mongo-sanitize');
+const xss = require('xss-clean');
+const hpp = require('hpp');
+
 const morgan = require('morgan');
 const path = require('path');
 
@@ -38,7 +43,7 @@ if (process.env.NODE_ENV === 'development') {
 // Rate Limiting: to allow number of http request from particular IP address
 const limiter = rateLimit({
   // 100 requests from same IP per Hour
-  max: 3,
+  max: 100,
   windowMs: 60 * 60 * 1000,
   message: 'Too many requests from this IP, please try in an hour!',
 });
@@ -46,6 +51,25 @@ app.use('/api', limiter);
 
 // Middleware to consume Request Body Object - default body parser package
 app.use(express.json());
+
+// Data sanitization against NoSQL database query injection.
+// NoSQL injection occurs when a db query, most commonly delivered by an end-user,
+// is not sanitized, allowing the attacker to include malicious input that
+// executes an unwanted command on the database.
+// This will remove mongo syntax - '$' to make it invalid from the request object.
+app.use(mongoSanitize());
+
+// Data sanitization against XSS attack
+// To clean any user input from malicious html/js code basically by converting the html data
+app.use(xss());
+
+// Preventing parameter pollution which is to remove extra unwanted query params
+app.use(
+  hpp({
+    // to allow following query param duplicates in the query string which we defined ourself
+    whitelist: ['duration', 'ratingsQuantity', 'ratingsAverage', 'maxGroupSize', 'difficulty', 'price'],
+  })
+);
 
 // note - we have access to Request/Response & Next function on any middleware
 // creating our own custom middleware which gets executed on each single request

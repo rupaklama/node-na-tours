@@ -37,6 +37,8 @@ class APIFeatures {
 
   sort() {
     if (this.queryString.sort) {
+      console.log(this.queryString.sort);
+
       // api/v1/tours?sort=price,ratingsAverage - since can't have whitespace in the url so using ','
       // ratings Average
       const sortBy = this.queryString.sort.split(',').join(' ');
