@@ -20,7 +20,9 @@ process.on('uncaughtException', (err) => {
 // console.log(app.get('env')); // development
 
 // note - Node also sets default Env Variables
-// console.log(process.env)); // development
+// NODE_ENV is automatically set & detected based on the current environment like dev, test or prod
+// It is very helpful on setting configurations & application logic based on the NODE_ENV variable
+console.log('env: ', process.env.NODE_ENV);
 
 // object to specify the path to our config file
 // this will set env variables in Node process module to make it available throughout our app

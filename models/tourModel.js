@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const slugify = require('slugify');
+// const User = require('./userModel');
 
 // basic schema
 const tourSchema = new mongoose.Schema(
@@ -104,7 +105,43 @@ const tourSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+
+    startLocation: {
+      // Geospatial data, mongodb data with lat & long with GeoJSON format
+      type: {
+        type: String,
+        default: 'Point',
+        enum: ['Point'],
+      },
+      // Note: Need two defined at least two fields
+      coordinates: [Number],
+      address: String,
+      description: String,
+    },
+
+    // Note: Embedding/Demoralizing data in the same document here for data modeling with an array
+    locations: [
+      {
+        type: {
+          type: String,
+          default: 'Point',
+          enum: ['Point'],
+        },
+        coordinates: [Number],
+        address: String,
+        description: String,
+        day: Number,
+      },
+    ],
+    // Child Referencing using Mongoose
+    guides: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: 'User',
+      },
+    ],
   },
+
   // second arg is Option Object
   {
     // Each time data is send back as a json, we want virtuals to be true
@@ -148,6 +185,14 @@ tourSchema.pre('save', function (next) {
   // calling pass arg 'next' middleware here
   next();
 });
+
+// Note: Embedding/Demoralizing data in the same document here for data modeling
+// tourSchema.pre('save', async function (next) {
+//   const guidesPromises = this.guides.map(async (id) => await User.findById(id));
+//   this.guides = await Promise.all(guidesPromises);
+
+//   next();
+// });
 
 // tourSchema.pre('save', (next) => {
 //   console.log('Will save document!');
