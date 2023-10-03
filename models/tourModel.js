@@ -140,6 +140,21 @@ const tourSchema = new mongoose.Schema(
         ref: 'User',
       },
     ],
+
+    // note: We do not want to store the array of Reviews with ids here as it grows indefinitely in our db.
+    // That is why 'reviews' is doing the Parent Referencing to Tour.
+
+    // note: Since Tour is a Parent, it does not know its children 'reviews'
+    // because the 'reviews' is doing the Parent Referencing to Tour.
+    // In this case, we want Tour to know all the reviews it got. In order to do it easily,
+    // mongoose offers a nice solution with 'Virtual Populate'.
+    // note: So, we can actually populate Tour with Reviews avoiding array of reviews ids in tour.
+    // So, think of Virtual Populate as keeping array of ids on Tour with persisting in the db.
+
+    // Child Referencing, don't want to do it
+    // reviews: [{ type: mongoose.Schema.ObjectId, ref: 'Review' }],
+
+    // NOTE: Above issue is handled below - tourSchema.virtual
   },
 
   // second arg is Option Object
@@ -166,6 +181,16 @@ tourSchema.virtual('durationWeeks').get(function () {
   // note - arrow function won't work here since arrow function does not get its own 'this' keyword
   // 'this' points to a current document
   return this.duration / 7; // 1 === 7 days
+});
+
+// name & option object in Virtual Populate
+tourSchema.virtual('reviews', {
+  // model reference
+  ref: 'Review',
+  // specify name of the fields in order to connect two datasets - review & tour models
+  foreignField: 'tour', // field in reviewModel
+  // _id is referring to the 'tour' in the reviewModel
+  localField: '_id',
 });
 
 // NOTE -  Mongoose also have four types of middleware
@@ -211,6 +236,7 @@ tourSchema.pre('save', function (next) {
 // This middleware allows us to run Function before or after certain query is executed
 // PreFind hook is a middleware executed before any Find Query is executed
 // /^find/ - regular expression to execute all kinds of Find Queries, strings start with 'find'
+// note: This will apply automatically in all Find Queries eg. findAll, find etc
 tourSchema.pre(/^find/, function (next) {
   // note - 'this' here refers to the current query since we are not processing any document object here
   // running an additional query here before executing a Main Controller Query to filter out
@@ -218,6 +244,17 @@ tourSchema.pre(/^find/, function (next) {
 
   // to find how long the query took to get executed
   this.start = Date.now();
+  next();
+});
+
+tourSchema.pre(/^find/, function (next) {
+  // populate() is to fill up with actual data from related documents through referencing
+  // path: 'guides' - populate with Guide documents & best place to add it is in the modal itself for performance
+  this.populate({
+    path: 'guides',
+    // exclude these fields in the response
+    select: '-__v -passwordChangedAt',
+  });
   next();
 });
 

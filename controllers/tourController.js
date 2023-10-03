@@ -48,11 +48,7 @@ exports.getAllTours = catchAsync(async (req, res, next) => {
   // API Query object - Query.prototype.sort()
   // 2. Execute QUERY
   // Args - schema query `Model.find()`, queryString
-  const features = new APIFeatures(Tour.find(), req.query)
-    .filter()
-    .sort()
-    .limitFields()
-    .paginate();
+  const features = new APIFeatures(Tour.find(), req.query).filter().sort().limitFields().paginate();
 
   // note - apply await at the end result of final query
   // note - all the queries are store in this prop variable in class
@@ -80,7 +76,9 @@ exports.getAllTours = catchAsync(async (req, res, next) => {
 
 exports.getTour = catchAsync(async (req, res, next) => {
   // route('/:id') - console.log(req.params);
-  const tour = await Tour.findById(req.params.id);
+  // populate() is to fill up with actual data from related documents through child referencing
+  // .populate('guides') - populate with guide documents & best place to add it in Query Middleware for performance
+  const tour = await Tour.findById(req.params.id).populate('reviews');
   // same as above with filter object
   // const tour = await Tour.findOne({ _id: req.params.id });
 
