@@ -1,8 +1,18 @@
 const express = require('express');
 const tourController = require('../controllers/tourController');
 const authController = require('../controllers/authController');
+const reviewRouter = require('./../routes/reviewRoutes');
 
 const router = express.Router();
+
+// note: Nested Routes
+// router
+//   .route('/:tourId/reviews')
+//   .post(authController.protect, authController.restrictTo('user'), reviewController.createReview);
+
+// note: Creating nested routes like above with 'mergeParams' feature to share current url 'params' to next router
+// This tour router should use review router when - '/:tourId/reviews'
+router.use('/:tourId/reviews', reviewRouter);
 
 // router.get('/api/v1/tours', getAllTours);
 // router.route('/api/v1/tours').get(getAllTours); SAME AS ABOVE
