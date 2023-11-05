@@ -5,16 +5,22 @@ const router = express.Router();
 const userController = require('../controllers/userController');
 const authController = require('../controllers/authController');
 
+// Get Current User
+router.get('/me', authController.protect, userController.getMe, userController.getUser);
+
 router.post('/signup', authController.signup);
 router.post('/login', authController.login);
-
 router.post('/forgot-password', authController.forgotPassword);
 router.patch('/reset-password/:token', authController.resetPassword);
-router.patch('/update-password', authController.protect, authController.updatePassword);
-router.patch('/update-user', authController.protect, userController.updateAuthUser);
-router.delete('/delete-user', authController.protect, userController.deleteAuthUser);
 
-router.route('/').get(userController.getAllUsers).post(userController.createUser);
+// note: all the routes after this middleware are protected routes now
+router.use(authController.protect);
+router.patch('/update-password', authController.updatePassword);
+router.patch('/update-user', userController.updateAuthUser);
+router.delete('/delete-user', userController.deleteAuthUser);
+// note: only 'admin' has access to all the protected routes below
+router.use(authController.restrictTo('admin'));
+router.route('/').get(userController.getAllUsers, userController.createUser);
 router
   .route('/:id')
   .get(userController.getUser)

@@ -17,6 +17,13 @@ const filterObj = (obj, ...allowedFields) => {
   return newObj;
 };
 
+// Get Current User
+exports.getMe = (req, res, next) => {
+  req.params.id = req.user.id;
+  console.log(req.params);
+  next();
+};
+
 exports.getAllUsers = catchAsync(async (req, res) => {
   const users = await User.find();
 
@@ -55,6 +62,13 @@ exports.updateAuthUser = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.createUser = (req, res) => {
+  res.status(500).json({
+    status: 'error',
+    message: 'This route is not defined! Please use /signup instead',
+  });
+};
+
 // delete user - The user account gets removed but the in-active user data still remains in the db
 exports.deleteAuthUser = catchAsync(async (req, res, next) => {
   await User.findByIdAndUpdate(req.user.id, { active: false });
@@ -64,26 +78,48 @@ exports.deleteAuthUser = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.getUser = (req, res) => {
-  res.status(500).json({
-    status: 'server error',
-    message: 'This route is not yet defined',
-  });
-};
+exports.getUser = catchAsync(async (req, res, next) => {
+  // route('/:id') - console.log(req.params);
+  const user = await User.findById(req.params.id);
+  // same as above with filter object
+  // const User = await User.findOne({ _id: req.params.id });
 
-exports.createUser = (req, res) => {
-  res.status(500).json({
-    status: 'server error',
-    message: 'This route is not yet defined',
-  });
-};
+  // user is null
+  if (!user) {
+    return next(new AppError('No user found with that Id', 404));
+  }
 
-exports.updateUser = (req, res) => {
-  res.status(500).json({
-    status: 'server error',
-    message: 'This route is not yet defined',
+  res.status(200).json({
+    status: 'success',
+    data: {
+      user,
+    },
   });
-};
+});
+
+// note: do not update passwords with this
+exports.updateUser = catchAsync(async (req, res, next) => {
+  // id with req.body to update our data
+  // third arg is option object
+  const user = await User.findByIdAndUpdate(req.params.id, req.body, {
+    // this will make sure the new updated document is the one that gets return
+    // true to return the modified document rather than the original. defaults to false
+    new: true,
+    // to validate data against our schema
+    runValidators: true,
+  });
+
+  if (!user) {
+    return next(new AppError('No user found with that Id', 404));
+  }
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      user: user,
+    },
+  });
+});
 
 exports.deleteUser = (req, res) => {
   res.status(500).json({
