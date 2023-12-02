@@ -14,6 +14,7 @@ const path = require('path');
 const toursRouter = require('./routes/tourRoutes');
 const userRouter = require('./routes/userRoutes');
 const reviewRouter = require('./routes/reviewRoutes');
+const viewRouter = require('./routes/viewRoutes');
 
 const AppError = require('./utils/appError');
 const globalErrorHandler = require('./controllers/errorController');
@@ -28,7 +29,7 @@ app.use(helmet());
 // defining pug view engine here
 app.set('view engine', 'pug');
 
-// define path to 'views' in our file system
+// define path to 'views' dir in our file system
 app.set('views', path.join(__dirname, 'views'));
 
 // Middleware to server Static files from local directory
@@ -90,15 +91,18 @@ app.use((req, res, next) => {
 });
 
 /* ROUTES */
-app.get('/', (req, res) => {
-  // render base pug template
-  res.status(200).render('base', {
-    // this option object is to pass any data to render in pug template
-    // Object Properties are known as Locals in pug file
-    tour: 'The Forest Hiker',
-    user: 'Jonas',
-  });
-});
+
+// app.get('/', (req, res) => {
+//   // render base pug template
+//   res.status(200).render('base', {
+//     // this option object is to pass any params to render in pug template
+//     // Object Properties are known as 'Locals' in pug file
+//     title: 'Home',
+//   });
+// });
+
+// note: Tour Overview page is our home page
+app.use('/', viewRouter);
 
 app.use('/api/v1/tours', toursRouter);
 app.use('/api/v1/users', userRouter);
