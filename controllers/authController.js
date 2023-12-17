@@ -25,7 +25,7 @@ const createSendToken = (user, statusCode, res) => {
     expires: new Date(Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000),
     // Cookie to be only send in encrypted connection - https, only works in prod
     // secure: true,
-    // Cookie cannot be access or modified anyway by Browser
+    // Cookie cannot be access, modified or delete anyway by Browser
     httpOnly: true,
   };
 
@@ -77,11 +77,26 @@ exports.login = catchAsync(async (req, res, next) => {
   createSendToken(user, 200, res);
 });
 
+exports.logout = catchAsync(async (req, res, next) => {
+  // note: since we set cookie as 'httpOnly: true' so that it cannot be modified or deleted
+  // The solution is to send new cookie with exact same name but without a token which will override current cookie
+  // Also, this cookie will have very short expiration time to fake like deleting a cookie.
+  res.cookie('jwt', 'fakeTokenToDeleteCurrentCookie', {
+    expires: new Date(Date.now() + 10 * 1000), // in 10 secs from now
+    httpOnly: true,
+  });
+
+  res.status(200).json({ status: 'success' });
+});
+
 exports.protect = catchAsync(async (req, res, next) => {
   let token;
-  // check if token exists
+
+  // note: Two ways to Authenticate user
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     token = req.headers.authorization.split(' ')[1];
+  } else if (req.cookies.jwt) {
+    token = req.cookies.jwt;
   }
 
   if (!token) {
@@ -112,6 +127,38 @@ exports.protect = catchAsync(async (req, res, next) => {
   // grant access to protected route
   next();
 });
+
+// only for auth rendered pages, no errors
+exports.isLoggedIn = async (req, res, next) => {
+  try {
+    if (req.cookies.jwt) {
+      // verify(token, process.env.JWT_SECRET).then().catch();
+      const decoded = await promisify(jwt.verify)(req.cookies.jwt, process.env.JWT_SECRET);
+
+      // check if user still exists
+      const currentUser = await User.findById(decoded.id);
+      if (!currentUser) {
+        return next();
+      }
+
+      // check if user changed password after token was issued
+      if (currentUser.changedPasswordAfter(decoded.iat)) {
+        return next();
+      }
+
+      // Auth user exists
+      // note: pug template will have access into 'res.locals' variable with current user object
+      res.locals.user = currentUser;
+
+      return next();
+    }
+  } catch (error) {
+    // no auth user flow
+    return next();
+  }
+
+  next();
+};
 
 // authorization: User roles & permissions
 // note - need wrapper function since can't pass args into middleware function

@@ -7,6 +7,7 @@ const helmet = require('helmet');
 const mongoSanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
 const hpp = require('hpp');
+const cookieParser = require('cookie-parser');
 
 const morgan = require('morgan');
 const path = require('path');
@@ -54,6 +55,8 @@ app.use('/api', limiter);
 // Middleware to consume Request Body Object - default body parser package
 app.use(express.json());
 
+app.use(cookieParser());
+
 // Data sanitization against NoSQL database query injection.
 // NoSQL injection occurs when a db query, most commonly delivered by an end-user,
 // is not sanitized, allowing the attacker to include malicious input that
@@ -87,6 +90,7 @@ app.use((req, res, next) => {
 app.use((req, res, next) => {
   // adding current time to the request
   req.requestTime = new Date().toISOString();
+  // console.log(req.cookies);
   next();
 });
 

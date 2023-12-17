@@ -6,11 +6,11 @@ export const login = async (email, password) => {
   try {
     const res = await axios({
       method: 'POST',
-      url: 'http://127.0.0.1:3000/api/v1/users/login',
+      url: 'http://localhost:8000/api/v1/users/login',
       data: {
         email,
-        password
-      }
+        password,
+      },
     });
 
     if (res.data.status === 'success') {
@@ -28,9 +28,14 @@ export const logout = async () => {
   try {
     const res = await axios({
       method: 'GET',
-      url: 'http://127.0.0.1:3000/api/v1/users/logout'
+      url: 'http://localhost:8000/api/v1/users/logout',
     });
+    // note: reloading a page after deleting a cookie to update the menu
+    // we need to do it here since this is ajax call we can't do it in the backend with express
     if ((res.data.status = 'success')) location.reload(true);
+    // true - to fore reload from the server, not from browser cache
+    // This part if very important since it might load the same page from the browser cache
+    // which will still display old user menu.
   } catch (err) {
     console.log(err.response);
     showAlert('error', 'Error logging out! Try again.');
