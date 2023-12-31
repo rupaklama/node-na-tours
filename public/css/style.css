@@ -714,6 +714,13 @@ body {
   display: -ms-flexbox;
   display: flex;
 }
+
+@media only screen and (max-width: 700px) {
+  .user-view {
+    flex-wrap: wrap;
+    align-items: center;
+  }
+}
 .user-view__menu {
   -webkit-box-flex: 32rem;
   -ms-flex: 32rem 0 0px;

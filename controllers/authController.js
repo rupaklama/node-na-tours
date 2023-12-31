@@ -123,6 +123,7 @@ exports.protect = catchAsync(async (req, res, next) => {
 
   // for future use
   req.user = currentUser;
+  res.locals.user = currentUser;
 
   // grant access to protected route
   next();
@@ -240,7 +241,7 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
 
 // password update for current auth user
 exports.updatePassword = catchAsync(async (req, res, next) => {
-  // 1. Get User form collection
+  // 1. Get User from collection
   const user = await User.findById(req.user.id).select('+password');
 
   // 2. Check if the provided current password is correct

@@ -33,6 +33,7 @@ if (userDataForm)
     e.preventDefault();
     const name = document.getElementById('name').value;
     const email = document.getElementById('email').value;
+
     updateSettings({ name, email }, 'data');
   });
 

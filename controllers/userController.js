@@ -1,8 +1,51 @@
 /* MVC architecture - Model, View, Controller */
+const multer = require('multer');
 
 const User = require('../models/userModel');
 const catchAsync = require('./../utils/catchAsync');
 const AppError = require('../utils/appError');
+
+// to store in our file system with custom file name
+const multerStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    // cb is similar to 'next' middleware
+    // callback func - first arg is for 'error' if there is one, second arg is the storage destination
+    cb(null, 'public/img/users');
+  },
+  filename: (req, file, cb) => {
+    // generating unique file names with file extensions to avoid name issues
+    // user-id-timestamp.jpeg
+    const ext = file.mimetype.split('/')[1];
+
+    cb(null, `user-${req.user.id}-${Date.now()}.${ext}`);
+  },
+});
+
+const errorOutputFn = () => {
+  const err = new Error('Not an image. Please upload only images.');
+  err.status = 'fail';
+  err.statusCode = 400;
+  return err;
+};
+
+// to filter if the uploaded file is an image type
+const multerFilter = (req, file, cb) => {
+  // if image file pass 'true' to cb else false
+  if (file.mimetype.startsWith('image')) {
+    cb(null, true);
+  } else {
+    // cb(new Error('Not an image. Please upload only images.'), false);
+    cb(errorOutputFn(), false);
+  }
+};
+
+// const upload = multer({ dest: 'public/img/users' });
+const upload = multer({
+  storage: multerStorage,
+  fileFilter: multerFilter,
+});
+
+exports.uploadUserPhoto = upload.single('photo');
 
 // helper function
 const filterObj = (obj, ...allowedFields) => {
@@ -47,6 +90,7 @@ exports.updateAuthUser = catchAsync(async (req, res, next) => {
   // body.role: 'admin' - if presents in the req.body, any malicious user can change a role to the administrator
   // This function allows us to filter properties that we want to only update
   const filteredBody = filterObj(req.body, 'name', 'email');
+  if (req.file) filteredBody.photo = req.file.filename;
 
   // 3. Update user document
   const updatedUser = await User.findByIdAndUpdate(req.user.id, filteredBody, {

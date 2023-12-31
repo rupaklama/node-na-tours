@@ -8,6 +8,7 @@ const mongoSanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
 const hpp = require('hpp');
 const cookieParser = require('cookie-parser');
+// const bodyParser = require('body-parser');
 
 const morgan = require('morgan');
 const path = require('path');
@@ -25,7 +26,13 @@ const globalErrorHandler = require('./controllers/errorController');
 const app = express();
 
 // Set security HTTP Headers
-app.use(helmet());
+// This disables the Content-Security-Policy and X-Download-Options headers.
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+    xDownloadOptions: false,
+  })
+);
 
 // defining pug view engine here
 app.set('view engine', 'pug');
@@ -52,8 +59,13 @@ const limiter = rateLimit({
 });
 app.use('/api', limiter);
 
-// Middleware to consume Request Body Object - default body parser package
+// default body parser package
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+// note: middleware to parse request body bit by bit into string characters & make it available in req.body
+// app.use(bodyParser.urlencoded({ extended: true }));
+// note: urlencoded - url query string data but won't parse raw data in image, video etc
+// Using 'multer' to parse raw data in files into string characters
 
 app.use(cookieParser());
 
@@ -112,7 +124,7 @@ app.use('/api/v1/tours', toursRouter);
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/reviews', reviewRouter);
 
-// unhandled routes
+// unhandled routes for all types of http calls
 app.all('*', (req, res, next) => {
   // creating error object with msg & defining the status, statusCode
   // const err = new Error(`Can't find ${req.originalUrl} on this server!`);
@@ -127,7 +139,7 @@ app.all('*', (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
 });
 
-// NOTE - Global Operational Error handling middleware
+// NOTE - Global Operational Error handling middleware in express
 // handling all Operation Errors in one place
 // app.use((err, req, res, next) => {
 // stack trace are details where the error occurred
