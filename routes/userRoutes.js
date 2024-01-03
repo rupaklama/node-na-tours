@@ -17,7 +17,14 @@ router.patch('/reset-password/:token', authController.resetPassword);
 // note: all the routes after this middleware are protected routes now
 router.use(authController.protect);
 router.patch('/update-password', authController.updatePassword);
-router.patch('/update-user', userController.uploadUserPhoto, userController.updateAuthUser);
+
+router.patch(
+  '/update-user',
+  userController.uploadUserPhoto,
+  userController.resizeUserPhoto,
+  userController.updateAuthUser
+);
+
 router.delete('/delete-user', userController.deleteAuthUser);
 // note: only 'admin' has access to all the protected routes below
 router.use(authController.restrictTo('admin'));

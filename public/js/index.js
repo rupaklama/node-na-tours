@@ -31,10 +31,18 @@ if (logOutBtn) logOutBtn.addEventListener('click', logout);
 if (userDataForm)
   userDataForm.addEventListener('submit', (e) => {
     e.preventDefault();
-    const name = document.getElementById('name').value;
-    const email = document.getElementById('email').value;
 
-    updateSettings({ name, email }, 'data');
+    // programmatically recreate multipart form data
+    // to easily construct a set of key/value pairs representing form fields and their values
+    const form = new FormData();
+    form.append('name', document.getElementById('name').value);
+    form.append('email', document.getElementById('email').value);
+    form.append('photo', document.getElementById('photo').files[0]);
+
+    // const name = document.getElementById('name').value;
+    // const email = document.getElementById('email').value;
+
+    updateSettings(form, 'data');
   });
 
 if (userPasswordForm)

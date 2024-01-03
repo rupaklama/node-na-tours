@@ -1,25 +1,29 @@
 /* MVC architecture - Model, View, Controller */
 const multer = require('multer');
+const sharp = require('sharp');
 
 const User = require('../models/userModel');
 const catchAsync = require('./../utils/catchAsync');
 const AppError = require('../utils/appError');
 
 // to store in our file system with custom file name
-const multerStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    // cb is similar to 'next' middleware
-    // callback func - first arg is for 'error' if there is one, second arg is the storage destination
-    cb(null, 'public/img/users');
-  },
-  filename: (req, file, cb) => {
-    // generating unique file names with file extensions to avoid name issues
-    // user-id-timestamp.jpeg
-    const ext = file.mimetype.split('/')[1];
+// const multerStorage = multer.diskStorage({
+//   destination: (req, file, cb) => {
+//     // cb is similar to 'next' middleware
+//     // callback func - first arg is for 'error' if any, second arg is the storage destination
+//     cb(null, 'public/img/users');
+//   },
+//   filename: (req, file, cb) => {
+//     // generating unique file names with file extension to avoid name issues
+//     // user-id-timestamp.jpeg
+//     const ext = file.mimetype.split('/')[1];
 
-    cb(null, `user-${req.user.id}-${Date.now()}.${ext}`);
-  },
-});
+//     cb(null, `user-${req.user.id}-${Date.now()}.${ext}`);
+//   },
+// });
+
+// memoryStorage - store files in memory as Buffer objects
+const multerStorage = multer.memoryStorage();
 
 const errorOutputFn = () => {
   const err = new Error('Not an image. Please upload only images.');
@@ -28,9 +32,9 @@ const errorOutputFn = () => {
   return err;
 };
 
-// to filter if the uploaded file is an image type
+// to filter out if the uploaded file is an image type
 const multerFilter = (req, file, cb) => {
-  // if image file pass 'true' to cb else false
+  // if image type file, pass 'true' to cb else false
   if (file.mimetype.startsWith('image')) {
     cb(null, true);
   } else {
@@ -46,6 +50,21 @@ const upload = multer({
 });
 
 exports.uploadUserPhoto = upload.single('photo');
+
+exports.resizeUserPhoto = catchAsync(async (req, res, next) => {
+  if (!req.file) return next();
+
+  req.file.filename = `user-${req.user.id}-${Date.now()}.jpeg`;
+
+  // image buffer data
+  await sharp(req.file.buffer)
+    .resize(500, 500)
+    .toFormat('jpeg')
+    .jpeg({ quality: 90 })
+    .toFile(`public/img/users/${req.file.filename}`);
+
+  next();
+});
 
 // helper function
 const filterObj = (obj, ...allowedFields) => {

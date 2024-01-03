@@ -1,9 +1,86 @@
+const multer = require('multer');
+const sharp = require('sharp');
+
 const Tour = require('../models/tourModel');
 const catchAsync = require('./../utils/catchAsync');
 const AppError = require('../utils/appError');
 
 // Reusable Class Module APIs
 const APIFeatures = require('./../utils/apiFeatures');
+
+// memoryStorage - store files in memory as Buffer objects
+const multerStorage = multer.memoryStorage();
+
+const errorOutputFn = () => {
+  const err = new Error('Not an image. Please upload only images.');
+  err.status = 'fail';
+  err.statusCode = 400;
+  return err;
+};
+
+// to filter out if the uploaded file is an image type
+const multerFilter = (req, file, cb) => {
+  // if image type file, pass 'true' to cb else false
+  if (file.mimetype.startsWith('image')) {
+    cb(null, true);
+  } else {
+    // cb(new Error('Not an image. Please upload only images.'), false);
+    cb(errorOutputFn(), false);
+  }
+};
+
+// const upload = multer({ dest: 'public/img/users' });
+const upload = multer({
+  storage: multerStorage,
+  fileFilter: multerFilter,
+});
+
+//  processes multiple files associated with the given form fields
+exports.uploadTourImages =
+  // upload.array('images', 5) - only on having one field
+  upload.fields([
+    // objects describing multipart form fields to process
+    { name: 'imageCover', maxCount: 1 },
+    { name: 'images', maxCount: 3 },
+  ]);
+
+exports.resizeTourImages = catchAsync(async (req, res, next) => {
+  // req.files since processing multiple uploaded files
+  // console.log(req.files);
+
+  if (!req.files.imageCover || !req.files.images) return next();
+
+  // 1. Cover image to be 3:2 ratio resize size
+  // Upload in our server
+  const imageCoverFilename = `tour-${req.params.id}-${Date.now()}-cover.jpeg`;
+  await sharp(req.files.imageCover[0].buffer) // image buffer data
+    .resize(2000, 1333)
+    .toFormat('jpeg')
+    .jpeg({ quality: 90 })
+    .toFile(`public/img/tours/${imageCoverFilename}`);
+
+  // Add into req.body object to update the name in db
+  req.body.imageCover = imageCoverFilename;
+
+  // 2. Images
+  req.body.images = [];
+
+  await Promise.all(
+    req.files.images.map(async (file, i) => {
+      const filename = `tour-${req.params.id}-${Date.now()}-${i + 1}.jpeg`;
+
+      await sharp(file.buffer)
+        .resize(2000, 1333)
+        .toFormat('jpeg')
+        .jpeg({ quality: 90 })
+        .toFile(`public/img/tours/${filename}`);
+
+      req.body.images.push(filename);
+    })
+  );
+
+  next();
+});
 
 // note - Creating an alias route for popular endpoint like '/tours/top-5-cheap'
 // note - this will run before below endpoints
